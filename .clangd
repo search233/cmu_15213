@@ -1,0 +1,7 @@
+# 专门针对 Data Lab 项目的局部降噪配置
+Diagnostics:
+  Suppress: [
+    unused-parameter,                     # 隐藏“未使用变量”警告（反正等会儿就要用了）
+    bugprone-easily-swappable-parameters, # 隐藏“参数类型相同容易传反”的烦人警告
+    empty-translation-unit               # 隐藏开头的空单元警告
+  ]
