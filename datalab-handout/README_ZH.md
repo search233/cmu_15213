@@ -1,8 +1,5 @@
-这是一份为你翻译好的 **CS:APP Data Lab** 学生指南：
-
----
-
 CS:APP Data Lab
+
 学生指南
 
 ---
@@ -41,16 +38,14 @@ ishow.c         - 用于查看和分析整数表示的实用工具
 
 使用 dlc 编译器（`./dlc`）来自动检查你的 `bits.c` 版本是否符合编码规范：
 
-```
+```shell
     unix> ./dlc bits.c
-
 ```
 
 如果你的代码没有问题，dlc 会静默返回（不输出任何内容）。否则，它会打印出错误信息来标记所有不合规的地方。如果带上 `-e` 参数运行 dlc：
 
-```
-    unix> ./dlc -e bits.c  
-
+```shell
+    unix> ./dlc -e bits.c
 ```
 
 将会使 dlc 打印出每个函数所使用的运算符数量。
@@ -67,18 +62,16 @@ ishow.c         - 用于查看和分析整数表示的实用工具
 
 要编译并运行 btest 程序，请输入：
 
-```
+```shell
 unix> make btest
 unix> ./btest [可选的命令行参数]
-
 ```
 
 每次修改 `bits.c` 程序后，你都需要重新编译 btest。当在不同的平台之间切换时，你需要清除旧版本的 btest 并重新生成一个。请使用以下命令：
 
-```
+```shell
 unix> make clean
 unix> make btest
-
 ```
 
 Btest 通过在每个函数上运行数百万个测试用例来检测代码的正确性。它会对广为人知的边界情况（corner cases）进行大范围测试，例如整数谜题中的 `Tmin`（最小负数）和零，以及浮点数谜题中的零、无穷大（inf）以及非规格化数与规格化数之间的边界。当 btest 检测到你某个函数存在错误时，它会打印出失败的测试用例、错误的结果以及预期结果，然后终止对该函数的测试。
@@ -120,14 +113,13 @@ unix> ./btest -f foo -1 27 -2 0xf
 
 我们在此包含了 ishow 和 fshow 程序，分别用于帮助你解读整数和浮点数的二进制表示。这两个程序都接受一个十进制数或十六进制数作为参数。要编译它们，请输入：
 
-```
+```shell
 unix> make
-
 ```
 
 使用示例：
 
-```
+```shell
 unix> ./ishow 0x27
 Hex = 0x00000027,	Signed = 39,	Unsigned = 39
 
@@ -143,5 +135,4 @@ linux> ./fshow 15213243
 Floating point value 2.131829405e-38
 Bit Representation 0x00e822bb, sign = 0, exponent = 0x01, fraction = 0x6822bb
 Normalized.  +1.8135598898 X 2^(-126)
-
-```xxxxxxxxxx unix> ./ishow 0x27Hex = 0x00000027,   Signed = 39,    Unsigned = 39unix> ./ishow 27Hex = 0x0000001b,   Signed = 27,    Unsigned = 27unix> ./fshow 0x15213243Floating point value 3.255334057e-26Bit Representation 0x15213243, sign = 0, exponent = 0x2a, fraction = 0x213243Normalized.  +1.2593463659 X 2^(-85)linux> ./fshow 15213243Floating point value 2.131829405e-38Bit Representation 0x00e822bb, sign = 0, exponent = 0x01, fraction = 0x6822bbNormalized.  +1.8135598898 X 2^(-126)shell
+```
