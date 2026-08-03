@@ -1289,7 +1289,7 @@ Disassembly of section .text:
   40110b:	mov    %rsp,%r14
   40110e:	mov    $0x0,%r12d
 
-
+; ai != aj
   401114:	mov    %r13,%rbp
   401117:	mov    0x0(%r13),%eax
   40111b:	sub    $0x1,%eax
@@ -1348,6 +1348,7 @@ Disassembly of section .text:
   4011b0:	lea    0x28(%rsp),%rax
   4011b5:	lea    0x50(%rsp),%rsi
   4011ba:	mov    %rbx,%rcx
+
   4011bd:	mov    (%rax),%rdx
   4011c0:	mov    %rdx,0x8(%rcx)
   4011c4:	add    $0x8,%rax
@@ -1355,6 +1356,7 @@ Disassembly of section .text:
   4011cb:	je     4011d2 <phase_6+0xde>
   4011cd:	mov    %rdx,%rcx
   4011d0:	jmp    4011bd <phase_6+0xc9>
+
   4011d2:	movq   $0x0,0x8(%rdx)
   4011da:	mov    $0x5,%ebp
   4011df:	mov    0x8(%rbx),%rax
@@ -1365,6 +1367,7 @@ Disassembly of section .text:
   4011ee:	mov    0x8(%rbx),%rbx
   4011f2:	sub    $0x1,%ebp
   4011f5:	jne    4011df <phase_6+0xeb>
+
   4011f7:	add    $0x50,%rsp
   4011fb:	pop    %rbx
   4011fc:	pop    %rbp
