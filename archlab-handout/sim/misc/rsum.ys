@@ -1,0 +1,49 @@
+# 1. 引导与栈初始化
+    .pos 0
+    irmovq stack, %rsp      # 初始化栈指针
+    call main               # 调用主函数
+    halt                    # 停机
+
+.align 8
+# 2. 数据段
+ele1:
+    .quad 0x00a
+    .quad ele2
+ele2:
+    .quad 0x0b0
+    .quad ele3
+ele3:
+    .quad 0xc00
+    .quad 0
+
+# 3. 主函数与目标函数
+main:
+    irmovq ele1, %rdi       # 传参
+    call rsum_list
+    ret
+
+rsum_list:
+    pushq %rbx
+
+    andq %rdi, %rdi
+    je end
+
+    mrmovq 0(%rdi), %rbx
+    mrmovq 8(%rdi), %rdi
+
+    call rsum_list
+
+    addq %rbx, %rax
+    jmp done
+
+end:
+    xorq %rax, %rax
+
+done:
+    popq %rbx
+    ret
+
+
+# 4. 栈空间定义
+    .pos 0x200
+stack:

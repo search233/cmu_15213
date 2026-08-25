@@ -1,0 +1,52 @@
+# 1. 引导与栈初始化
+    .pos 0
+    irmovq stack, %rsp      # 初始化栈指针
+    call main               # 调用主函数
+    halt                    # 停机
+
+
+.align 8
+# 源数据块
+src:
+    .quad 0x00a
+    .quad 0x0b0
+    .quad 0xc00
+# 目标数据块
+dest:
+    .quad 0x111
+    .quad 0x222
+    .quad 0x333
+
+# 3. 主函数与目标函数
+main:
+    irmovq src, %rdi       # 传参
+    irmovq dest, %rsi
+    irmovq 0x3, %rdx
+    xorq %rax, %rax
+
+    call copy
+    ret
+
+copy:
+
+    irmovq $0x8, %r8
+    irmovq $0xffffffffffffffff, %r9
+
+
+    mrmovq 0(%rdi), %rcx
+    rmmovq %rcx, 0(%rsi)
+
+    xorq %rcx, %rax
+
+    addq %r8, %rdi
+    addq %r8, %rsi
+
+    addq %r9, %rdx
+    jg copy
+
+    ret
+
+
+# 4. 栈空间定义
+    .pos 0x200
+stack:

@@ -1,0 +1,68 @@
+/***********************************************************************
+ * Y86-64 汇编器、指令模拟器及 HCL 转换器
+ *
+ * 版权所有 (c) 2002, R. Bryant 与 D. O'Hallaron，保留所有权利。
+ * 未经许可，不得使用、修改或复制。
+ ***********************************************************************/ 
+
+本目录包含以下工具的所有源文件：
+
+YAS     Y86-64 汇编器
+YIS     Y86-64 指令级模拟器
+HCL2C   HCL 转 C 语言转换器
+HCL2V   HCL 转 Verilog 转换器
+
+*********************
+1. 构建工具
+*********************
+
+unix> make clean
+unix> make
+
+********
+2. 文件说明
+********
+
+Makefile                用于编译构建 yas、yis、hcl2c、hcl2v
+README                  本说明文件
+
+* 学生分发包中的 Makefile 版本
+* （仅限教师分发包）
+Makefile-sim    
+
+* CS:APP 体系结构实验（Architecture Lab）Part A 的示例程序
+examples.c              三个 Y86-64 函数的 C 语言实现版本
+ans-copy.ys             copy 函数参考答案（仅限教师分发包）
+ans-sum.ys              sum 函数参考答案（仅限教师分发包）
+ans-rsum.ys             rsum 函数参考答案（仅限教师分发包）
+
+* yas、yis、ssim、ssim+ 和 psim 共用的指令模拟器代码
+isa.c       
+isa.h
+
+* 用于构建 yas 汇编器的文件
+yas                     YAS 可执行二进制文件
+yas.c                   yas 源文件与头文件
+yas.h
+yas-grammar.lex         Y86-64 词法分析器规则文件
+yas-grammar.c           由 yas-grammar.lex 生成的词法分析器代码
+
+* 用于构建 yis 指令模拟器的文件
+yis                     YIS 可执行二进制文件
+yis.c                   yis 源文件
+
+* 用于构建 hcl2c 转换器的文件
+hcl2c                   HCL2C 可执行二进制文件
+node.c                  辅助例程与头文件
+node.h
+hcl.lex                 HCL 词法分析器规则文件
+lex.yy.c                由 hcl.lex 生成的 HCL 词法分析器代码
+hcl.y                   HCL 语法规则文件
+hcl.tab.c               由 hcl.y 生成的 HCL 语法分析器代码
+hcl.tab.h               词法单元（Token）定义文件
+
+* 编写 CS:APP 教材时使用的 HCL 示例程序
+* （仅限教师分发包）
+frag.{hcl,c}
+mux4.{hcl,c}
+reg-file.{hcl,c}
