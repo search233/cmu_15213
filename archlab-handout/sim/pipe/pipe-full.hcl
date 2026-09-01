@@ -1,16 +1,15 @@
 #/* $begin pipe-all-hcl */
 ####################################################################
-#    HCL Description of Control for Pipelined Y86-64 Processor     #
-#    Copyright (C) Randal E. Bryant, David R. O'Hallaron, 2014     #
+#    Y86-64 流水线处理器控制逻辑的 HCL 描述                        #
+#    版权所有 (C) Randal E. Bryant, David R. O'Hallaron, 2014      #
 ####################################################################
 
-## Your task is to implement the iaddq instruction
-## The file contains a declaration of the icodes
-## for iaddq (IIADDQ)
-## Your job is to add the rest of the logic to make it work
+## 你的任务是实现 iaddq 指令
+## 本文件包含了 iaddq 的指令代码声明（IIADDQ）
+## 你的工作是补充剩余的控制逻辑以使其正常工作
 
 ####################################################################
-#    C Include's.  Don't alter these                               #
+#         C 语言包含头文件（请勿修改）                                  #
 ####################################################################
 
 quote '#include <stdio.h>'
@@ -22,10 +21,10 @@ quote 'int sim_main(int argc, char *argv[]);'
 quote 'int main(int argc, char *argv[]){return sim_main(argc,argv);}'
 
 ####################################################################
-#    Declarations.  Do not change/remove/delete any of these       #
+#           声明部分（请勿更改/移除/删除以下任何内容）                    #
 ####################################################################
 
-##### Symbolic representation of Y86-64 Instruction Codes #############
+##### Y86-64 指令代码（icode）的符号表示 ###########################
 wordsig INOP 	'I_NOP'
 wordsig IHALT	'I_HALT'
 wordsig IRRMOVQ	'I_RRMOVQ'
@@ -38,129 +37,129 @@ wordsig ICALL	'I_CALL'
 wordsig IRET	'I_RET'
 wordsig IPUSHQ	'I_PUSHQ'
 wordsig IPOPQ	'I_POPQ'
-# Instruction code for iaddq instruction
+# iaddq 指令的指令代码
 wordsig IIADDQ	'I_IADDQ'
 
-##### Symbolic represenations of Y86-64 function codes            #####
-wordsig FNONE    'F_NONE'        # Default function code
+##### Y86-64 功能代码（ifun）的符号表示 ############################
+wordsig FNONE    'F_NONE'        # 默认功能代码
 
-##### Symbolic representation of Y86-64 Registers referenced      #####
-wordsig RRSP     'REG_RSP'    	     # Stack Pointer
-wordsig RNONE    'REG_NONE'   	     # Special value indicating "no register"
+##### 引用的 Y86-64 寄存器符号表示 #################################
+wordsig RRSP     'REG_RSP'    	     # 栈指针
+wordsig RNONE    'REG_NONE'   	     # 表示“无寄存器”的特殊值
 
-##### ALU Functions referenced explicitly ##########################
-wordsig ALUADD	'A_ADD'		     # ALU should add its arguments
+##### 显式引用的 ALU 功能 ##########################################
+wordsig ALUADD	'A_ADD'		     # ALU 执行加法操作
 
-##### Possible instruction status values                       #####
-wordsig SBUB	'STAT_BUB'	# Bubble in stage
-wordsig SAOK	'STAT_AOK'	# Normal execution
-wordsig SADR	'STAT_ADR'	# Invalid memory address
-wordsig SINS	'STAT_INS'	# Invalid instruction
-wordsig SHLT	'STAT_HLT'	# Halt instruction encountered
+##### 指令执行状态的可能取值 #######################################
+wordsig SBUB	'STAT_BUB'	# 阶段中存在气泡（Bubble）
+wordsig SAOK	'STAT_AOK'	# 正常执行
+wordsig SADR	'STAT_ADR'	# 非法内存地址
+wordsig SINS	'STAT_INS'	# 非法指令
+wordsig SHLT	'STAT_HLT'	# 遇到停机（Halt）指令
 
-##### Signals that can be referenced by control logic ##############
+##### 控制逻辑可引用的信号 #########################################
 
-##### Pipeline Register F ##########################################
+##### 流水线寄存器 F ###############################################
 
-wordsig F_predPC 'pc_curr->pc'	     # Predicted value of PC
+wordsig F_predPC 'pc_curr->pc'	     # 预测的 PC 值
 
-##### Intermediate Values in Fetch Stage ###########################
+##### 取指阶段（Fetch）的中间值 ####################################
 
-wordsig imem_icode  'imem_icode'      # icode field from instruction memory
-wordsig imem_ifun   'imem_ifun'       # ifun  field from instruction memory
-wordsig f_icode	'if_id_next->icode'  # (Possibly modified) instruction code
-wordsig f_ifun	'if_id_next->ifun'   # Fetched instruction function
-wordsig f_valC	'if_id_next->valc'   # Constant data of fetched instruction
-wordsig f_valP	'if_id_next->valp'   # Address of following instruction
-boolsig imem_error 'imem_error'	     # Error signal from instruction memory
-boolsig instr_valid 'instr_valid'    # Is fetched instruction valid?
+wordsig imem_icode  'imem_icode'      # 来自指令内存的 icode 字段
+wordsig imem_ifun   'imem_ifun'       # 来自指令内存的 ifun 字段
+wordsig f_icode	'if_id_next->icode'  # （可能被修改的）指令代码
+wordsig f_ifun	'if_id_next->ifun'   # 取出的指令功能
+wordsig f_valC	'if_id_next->valc'   # 取出指令的常数数据
+wordsig f_valP	'if_id_next->valp'   # 下一条指令的地址
+boolsig imem_error 'imem_error'	     # 来自指令内存的错误信号
+boolsig instr_valid 'instr_valid'    # 取出的指令是否有效？
 
-##### Pipeline Register D ##########################################
-wordsig D_icode 'if_id_curr->icode'   # Instruction code
-wordsig D_rA 'if_id_curr->ra'	     # rA field from instruction
-wordsig D_rB 'if_id_curr->rb'	     # rB field from instruction
-wordsig D_valP 'if_id_curr->valp'     # Incremented PC
+##### 流水线寄存器 D ###############################################
+wordsig D_icode 'if_id_curr->icode'   # 指令代码
+wordsig D_rA 'if_id_curr->ra'	     # 指令中的 rA 字段
+wordsig D_rB 'if_id_curr->rb'	     # 指令中的 rB 字段
+wordsig D_valP 'if_id_curr->valp'     # 递增后的 PC 值
 
-##### Intermediate Values in Decode Stage  #########################
+##### 译码阶段（Decode）的中间值 ###################################
 
-wordsig d_srcA	 'id_ex_next->srca'  # srcA from decoded instruction
-wordsig d_srcB	 'id_ex_next->srcb'  # srcB from decoded instruction
-wordsig d_rvalA 'd_regvala'	     # valA read from register file
-wordsig d_rvalB 'd_regvalb'	     # valB read from register file
+wordsig d_srcA	 'id_ex_next->srca'  # 译码指令得到的源寄存器 A
+wordsig d_srcB	 'id_ex_next->srcb'  # 译码指令得到的源寄存器 B
+wordsig d_rvalA 'd_regvala'	     # 从寄存器文件读出的 valA
+wordsig d_rvalB 'd_regvalb'	     # 从寄存器文件读出的 valB
 
-##### Pipeline Register E ##########################################
-wordsig E_icode 'id_ex_curr->icode'   # Instruction code
-wordsig E_ifun  'id_ex_curr->ifun'    # Instruction function
-wordsig E_valC  'id_ex_curr->valc'    # Constant data
-wordsig E_srcA  'id_ex_curr->srca'    # Source A register ID
-wordsig E_valA  'id_ex_curr->vala'    # Source A value
-wordsig E_srcB  'id_ex_curr->srcb'    # Source B register ID
-wordsig E_valB  'id_ex_curr->valb'    # Source B value
-wordsig E_dstE 'id_ex_curr->deste'    # Destination E register ID
-wordsig E_dstM 'id_ex_curr->destm'    # Destination M register ID
+##### 流水线寄存器 E ###############################################
+wordsig E_icode 'id_ex_curr->icode'   # 指令代码
+wordsig E_ifun  'id_ex_curr->ifun'    # 指令功能
+wordsig E_valC  'id_ex_curr->valc'    # 常数数据
+wordsig E_srcA  'id_ex_curr->srca'    # 源寄存器 A 的 ID
+wordsig E_valA  'id_ex_curr->vala'    # 源操作数 A 的值
+wordsig E_srcB  'id_ex_curr->srcb'    # 源寄存器 B 的 ID
+wordsig E_valB  'id_ex_curr->valb'    # 源操作数 B 的值
+wordsig E_dstE 'id_ex_curr->deste'    # 目的寄存器 E 的 ID
+wordsig E_dstM 'id_ex_curr->destm'    # 目的寄存器 M 的 ID
 
-##### Intermediate Values in Execute Stage #########################
-wordsig e_valE 'ex_mem_next->vale'	# valE generated by ALU
-boolsig e_Cnd 'ex_mem_next->takebranch' # Does condition hold?
-wordsig e_dstE 'ex_mem_next->deste'      # dstE (possibly modified to be RNONE)
+##### 执行阶段（Execute）的中间值 ##################################
+wordsig e_valE 'ex_mem_next->vale'	# ALU 计算生成的 valE
+boolsig e_Cnd 'ex_mem_next->takebranch' # 分支条件是否满足？
+wordsig e_dstE 'ex_mem_next->deste'      # dstE（可能被修改为 RNONE）
 
-##### Pipeline Register M                  #########################
-wordsig M_stat 'ex_mem_curr->status'     # Instruction status
-wordsig M_icode 'ex_mem_curr->icode'	# Instruction code
-wordsig M_ifun  'ex_mem_curr->ifun'	# Instruction function
-wordsig M_valA  'ex_mem_curr->vala'      # Source A value
-wordsig M_dstE 'ex_mem_curr->deste'	# Destination E register ID
-wordsig M_valE  'ex_mem_curr->vale'      # ALU E value
-wordsig M_dstM 'ex_mem_curr->destm'	# Destination M register ID
-boolsig M_Cnd 'ex_mem_curr->takebranch'	# Condition flag
-boolsig dmem_error 'dmem_error'	        # Error signal from instruction memory
+##### 流水线寄存器 M ###############################################
+wordsig M_stat 'ex_mem_curr->status'     # 指令状态
+wordsig M_icode 'ex_mem_curr->icode'	# 指令代码
+wordsig M_ifun  'ex_mem_curr->ifun'	# 指令功能
+wordsig M_valA  'ex_mem_curr->vala'      # 源操作数 A 的值
+wordsig M_dstE 'ex_mem_curr->deste'	# 目的寄存器 E 的 ID
+wordsig M_valE  'ex_mem_curr->vale'      # ALU 计算出的 E 值
+wordsig M_dstM 'ex_mem_curr->destm'	# 目的寄存器 M 的 ID
+boolsig M_Cnd 'ex_mem_curr->takebranch'	# 分支条件标志
+boolsig dmem_error 'dmem_error'	        # 来自数据内存的错误信号
 
-##### Intermediate Values in Memory Stage ##########################
-wordsig m_valM 'mem_wb_next->valm'	# valM generated by memory
-wordsig m_stat 'mem_wb_next->status'	# stat (possibly modified to be SADR)
+##### 访存阶段（Memory）的中间值 ###################################
+wordsig m_valM 'mem_wb_next->valm'	# 从内存读取生成的 valM
+wordsig m_stat 'mem_wb_next->status'	# 状态值（可能被修改为 SADR）
 
-##### Pipeline Register W ##########################################
-wordsig W_stat 'mem_wb_curr->status'     # Instruction status
-wordsig W_icode 'mem_wb_curr->icode'	# Instruction code
-wordsig W_dstE 'mem_wb_curr->deste'	# Destination E register ID
-wordsig W_valE  'mem_wb_curr->vale'      # ALU E value
-wordsig W_dstM 'mem_wb_curr->destm'	# Destination M register ID
-wordsig W_valM  'mem_wb_curr->valm'	# Memory M value
+##### 流水线寄存器 W ###############################################
+wordsig W_stat 'mem_wb_curr->status'     # 指令状态
+wordsig W_icode 'mem_wb_curr->icode'	# 指令代码
+wordsig W_dstE 'mem_wb_curr->deste'	# 目的寄存器 E 的 ID
+wordsig W_valE  'mem_wb_curr->vale'      # ALU 计算出的 E 值
+wordsig W_dstM 'mem_wb_curr->destm'	# 目的寄存器 M 的 ID
+wordsig W_valM  'mem_wb_curr->valm'	# 内存读取的 M 值
 
 ####################################################################
-#    Control Signal Definitions.                                   #
+#    控制信号定义                                                  #
 ####################################################################
 
-################ Fetch Stage     ###################################
+################ 取指阶段（Fetch Stage） ###########################
 
-## What address should instruction be fetched at
+## 应从哪个地址取出指令？
 word f_pc = [
-	# Mispredicted branch.  Fetch at incremented PC
+	# 分支预测错误：从递增后的 PC 取指
 	M_icode == IJXX && !M_Cnd : M_valA;
-	# Completion of RET instruction
+	# RET 指令完成执行
 	W_icode == IRET : W_valM;
-	# Default: Use predicted value of PC
+	# 默认：使用 PC 的预测值
 	1 : F_predPC;
 ];
 
-## Determine icode of fetched instruction
+## 确定取出指令的 icode
 word f_icode = [
 	imem_error : INOP;
 	1: imem_icode;
 ];
 
-# Determine ifun
+# 确定 ifun
 word f_ifun = [
 	imem_error : FNONE;
 	1: imem_ifun;
 ];
 
-# Is instruction valid?
+# 指令是否有效？
 bool instr_valid = f_icode in 
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
-	  IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ };
+	  IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ, IIADDQ };
 
-# Determine status code for fetched instruction
+# 确定取出指令的状态码
 word f_stat = [
 	imem_error: SADR;
 	!instr_valid : SINS;
@@ -168,196 +167,195 @@ word f_stat = [
 	1 : SAOK;
 ];
 
-# Does fetched instruction require a regid byte?
+# 取出的指令是否需要寄存器指示字节（regid）？
 bool need_regids =
 	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
-		     IIRMOVQ, IRMMOVQ, IMRMOVQ };
+		     IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ };
 
-# Does fetched instruction require a constant word?
+# 取出的指令是否需要常数字段（valC）？
 bool need_valC =
-	f_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ, IJXX, ICALL };
+	f_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ, IJXX, ICALL, IIADDQ };
 
-# Predict next value of PC
+# 预测 PC 的下一个值
 word f_predPC = [
 	f_icode in { IJXX, ICALL } : f_valC;
 	1 : f_valP;
 ];
 
-################ Decode Stage ######################################
+################ 译码阶段（Decode Stage） ##########################
 
-
-## What register should be used as the A source?
+## 应该使用哪个寄存器作为源 A？
 word d_srcA = [
 	D_icode in { IRRMOVQ, IRMMOVQ, IOPQ, IPUSHQ  } : D_rA;
 	D_icode in { IPOPQ, IRET } : RRSP;
-	1 : RNONE; # Don't need register
+	1 : RNONE; # 不需要寄存器
 ];
 
-## What register should be used as the B source?
+## 应该使用哪个寄存器作为源 B？
 word d_srcB = [
-	D_icode in { IOPQ, IRMMOVQ, IMRMOVQ  } : D_rB;
+	D_icode in { IOPQ, IRMMOVQ, IMRMOVQ, IIADDQ } : D_rB;
 	D_icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
-	1 : RNONE;  # Don't need register
+	1 : RNONE;  # 不需要寄存器
 ];
 
-## What register should be used as the E destination?
+## 应该使用哪个寄存器作为目的 E？
 word d_dstE = [
-	D_icode in { IRRMOVQ, IIRMOVQ, IOPQ} : D_rB;
+	D_icode in { IRRMOVQ, IIRMOVQ, IOPQ, IIADDQ } : D_rB;
 	D_icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
-	1 : RNONE;  # Don't write any register
+	1 : RNONE;  # 不写入任何寄存器
 ];
 
-## What register should be used as the M destination?
+## 应该使用哪个寄存器作为目的 M？
 word d_dstM = [
 	D_icode in { IMRMOVQ, IPOPQ } : D_rA;
-	1 : RNONE;  # Don't write any register
+	1 : RNONE;  # 不写入任何寄存器
 ];
 
-## What should be the A value?
-## Forward into decode stage for valA
+## valA 的值应该是什么？
+## 向译码阶段转发生成 valA
 word d_valA = [
-	D_icode in { ICALL, IJXX } : D_valP; # Use incremented PC
-	d_srcA == e_dstE : e_valE;    # Forward valE from execute
-	d_srcA == M_dstM : m_valM;    # Forward valM from memory
-	d_srcA == M_dstE : M_valE;    # Forward valE from memory
-	d_srcA == W_dstM : W_valM;    # Forward valM from write back
-	d_srcA == W_dstE : W_valE;    # Forward valE from write back
-	1 : d_rvalA;  # Use value read from register file
+	D_icode in { ICALL, IJXX } : D_valP; # 使用递增后的 PC
+	d_srcA == e_dstE : e_valE;    # 从执行阶段转发 valE
+	d_srcA == M_dstM : m_valM;    # 从访存阶段转发 valM
+	d_srcA == M_dstE : M_valE;    # 从访存阶段转发 valE
+	d_srcA == W_dstM : W_valM;    # 从写回阶段转发 valM
+	d_srcA == W_dstE : W_valE;    # 从写回阶段转发 valE
+	1 : d_rvalA;  # 使用从寄存器文件读取的值
 ];
 
 word d_valB = [
-	d_srcB == e_dstE : e_valE;    # Forward valE from execute
-	d_srcB == M_dstM : m_valM;    # Forward valM from memory
-	d_srcB == M_dstE : M_valE;    # Forward valE from memory
-	d_srcB == W_dstM : W_valM;    # Forward valM from write back
-	d_srcB == W_dstE : W_valE;    # Forward valE from write back
-	1 : d_rvalB;  # Use value read from register file
+	d_srcB == e_dstE : e_valE;    # 从执行阶段转发 valE
+	d_srcB == M_dstM : m_valM;    # 从访存阶段转发 valM
+	d_srcB == M_dstE : M_valE;    # 从访存阶段转发 valE
+	d_srcB == W_dstM : W_valM;    # 从写回阶段转发 valM
+	d_srcB == W_dstE : W_valE;    # 从写回阶段转发 valE
+	1 : d_rvalB;  # 使用从寄存器文件读取的值
 ];
 
-################ Execute Stage #####################################
+################ 执行阶段（Execute Stage） #########################
 
-## Select input A to ALU
+## 选择 ALU 的输入端 A
 word aluA = [
 	E_icode in { IRRMOVQ, IOPQ } : E_valA;
-	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ } : E_valC;
+	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ } : E_valC;
 	E_icode in { ICALL, IPUSHQ } : -8;
 	E_icode in { IRET, IPOPQ } : 8;
-	# Other instructions don't need ALU
+	# 其他指令不需要 ALU
 ];
 
-## Select input B to ALU
+## 选择 ALU 的输入端 B
 word aluB = [
 	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
-		     IPUSHQ, IRET, IPOPQ } : E_valB;
+		     IPUSHQ, IRET, IPOPQ, IIADDQ } : E_valB;
 	E_icode in { IRRMOVQ, IIRMOVQ } : 0;
-	# Other instructions don't need ALU
+	# 其他指令不需要 ALU
 ];
 
-## Set the ALU function
+## 设置 ALU 的功能
 word alufun = [
 	E_icode == IOPQ : E_ifun;
 	1 : ALUADD;
 ];
 
-## Should the condition codes be updated?
-bool set_cc = E_icode == IOPQ &&
-	# State changes only during normal operation
+## 是否应该更新条件码？
+bool set_cc = E_icode in { IOPQ, IIADDQ } &&
+	# 仅在正常运行状态下允许改变状态
 	!m_stat in { SADR, SINS, SHLT } && !W_stat in { SADR, SINS, SHLT };
 
-## Generate valA in execute stage
-word e_valA = E_valA;    # Pass valA through stage
+## 在执行阶段生成 valA
+word e_valA = E_valA;    # 将 valA 直接传递通过该阶段
 
-## Set dstE to RNONE in event of not-taken conditional move
+## 当条件传送未发生时，将 dstE 设置为 RNONE
 word e_dstE = [
 	E_icode == IRRMOVQ && !e_Cnd : RNONE;
 	1 : E_dstE;
 ];
 
-################ Memory Stage ######################################
+################ 访存阶段（Memory Stage） ##########################
 
-## Select memory address
+## 选择内存访问地址
 word mem_addr = [
 	M_icode in { IRMMOVQ, IPUSHQ, ICALL, IMRMOVQ } : M_valE;
 	M_icode in { IPOPQ, IRET } : M_valA;
-	# Other instructions don't need address
+	# 其他指令不需要内存地址
 ];
 
-## Set read control signal
+## 设置读控制信号
 bool mem_read = M_icode in { IMRMOVQ, IPOPQ, IRET };
 
-## Set write control signal
+## 设置写控制信号
 bool mem_write = M_icode in { IRMMOVQ, IPUSHQ, ICALL };
 
 #/* $begin pipe-m_stat-hcl */
-## Update the status
+## 更新状态
 word m_stat = [
 	dmem_error : SADR;
 	1 : M_stat;
 ];
 #/* $end pipe-m_stat-hcl */
 
-## Set E port register ID
+## 设置 E 端口目的寄存器 ID
 word w_dstE = W_dstE;
 
-## Set E port value
+## 设置 E 端口写入值
 word w_valE = W_valE;
 
-## Set M port register ID
+## 设置 M 端口目的寄存器 ID
 word w_dstM = W_dstM;
 
-## Set M port value
+## 设置 M 端口写入值
 word w_valM = W_valM;
 
-## Update processor status
+## 更新处理器整体状态
 word Stat = [
 	W_stat == SBUB : SAOK;
 	1 : W_stat;
 ];
 
-################ Pipeline Register Control #########################
+################ 流水线寄存器控制 ##################################
 
-# Should I stall or inject a bubble into Pipeline Register F?
-# At most one of these can be true.
+# 是否对流水线寄存器 F 进行暂停（stall）或插入气泡（bubble）？
+# 以下条件最多只有一个为真
 bool F_bubble = 0;
 bool F_stall =
-	# Conditions for a load/use hazard
+	# 加载/使用（Load/Use）冒险的触发条件
 	E_icode in { IMRMOVQ, IPOPQ } &&
 	 E_dstM in { d_srcA, d_srcB } ||
-	# Stalling at fetch while ret passes through pipeline
+	# 当 ret 正在流水线中传递时，在取指阶段暂停
 	IRET in { D_icode, E_icode, M_icode };
 
-# Should I stall or inject a bubble into Pipeline Register D?
-# At most one of these can be true.
+# 是否对流水线寄存器 D 进行暂停（stall）或插入气泡（bubble）？
+# 以下条件最多只有一个为真
 bool D_stall = 
-	# Conditions for a load/use hazard
+	# 加载/使用（Load/Use）冒险的触发条件
 	E_icode in { IMRMOVQ, IPOPQ } &&
 	 E_dstM in { d_srcA, d_srcB };
 
 bool D_bubble =
-	# Mispredicted branch
+	# 分支预测错误
 	(E_icode == IJXX && !e_Cnd) ||
-	# Stalling at fetch while ret passes through pipeline
-	# but not condition for a load/use hazard
+	# 当 ret 正在流水线中传递时取指暂停，
+	# 且未发生加载/使用冒险
 	!(E_icode in { IMRMOVQ, IPOPQ } && E_dstM in { d_srcA, d_srcB }) &&
 	  IRET in { D_icode, E_icode, M_icode };
 
-# Should I stall or inject a bubble into Pipeline Register E?
-# At most one of these can be true.
+# 是否对流水线寄存器 E 进行暂停（stall）或插入气泡（bubble）？
+# 以下条件最多只有一个为真
 bool E_stall = 0;
 bool E_bubble =
-	# Mispredicted branch
+	# 分支预测错误
 	(E_icode == IJXX && !e_Cnd) ||
-	# Conditions for a load/use hazard
+	# 加载/使用（Load/Use）冒险的触发条件
 	E_icode in { IMRMOVQ, IPOPQ } &&
 	 E_dstM in { d_srcA, d_srcB};
 
-# Should I stall or inject a bubble into Pipeline Register M?
-# At most one of these can be true.
+# 是否对流水线寄存器 M 进行暂停（stall）或插入气泡（bubble）？
+# 以下条件最多只有一个为真
 bool M_stall = 0;
-# Start injecting bubbles as soon as exception passes through memory stage
+# 一旦异常传递经过访存阶段，立即开始插入气泡
 bool M_bubble = m_stat in { SADR, SINS, SHLT } || W_stat in { SADR, SINS, SHLT };
 
-# Should I stall or inject a bubble into Pipeline Register W?
+# 是否对流水线寄存器 W 进行暂停（stall）或插入气泡（bubble）？
 bool W_stall = W_stat in { SADR, SINS, SHLT };
 bool W_bubble = 0;
 #/* $end pipe-all-hcl */
